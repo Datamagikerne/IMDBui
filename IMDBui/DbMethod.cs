@@ -218,6 +218,64 @@ namespace IMDBui
             }
         }
 
+        public static void AddPerson()
+        {
+            Console.Clear();
+            Console.WriteLine("Add a New Person to the Database");
+
+            Console.Write("Enter nconst (e.g., nt123456): ");
+            string nconst = Console.ReadLine();
+
+            Console.Write("Enter full name type (e.g., Mads Mikkelsen): ");
+            string primaryName = Console.ReadLine();
+
+            Console.Write("Enter birth year: ");
+            string birthYear = Console.ReadLine();
+
+            Console.Write("Enter death year (or leave blank): ");
+            string deathYear = Console.ReadLine();
+
+            Console.Write("Enter primary professions (comma separated): ");
+            List<string> primaryProfession = Console.ReadLine().Split(',').ToList();
+
+            Console.Write("Enter known for titles (comma separated, e.g., tt123456,tt789012): ");
+            List<string> knownForTitles = Console.ReadLine().Split(',').ToList();
+
+
+            using SqlConnection connection = new SqlConnection(ConnectionString);
+            connection.Open();
+
+            using SqlCommand cmd = new SqlCommand("sp_AddMovie", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.AddWithValue("@nconst", nconst);
+            cmd.Parameters.AddWithValue("@primaryName", primaryName);
+            cmd.Parameters.AddWithValue("@birthYear", birthYear);
+            cmd.Parameters.AddWithValue("@deathYear", deathYear);
+            cmd.Parameters.AddWithValue("@primaryProfession", string.Join(",", primaryProfession));
+            cmd.Parameters.AddWithValue("@knownForTitles", string.Join(",", knownForTitles));
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+                Console.WriteLine("Person added successfully!");
+            }
+            catch (SqlException ex)
+            {
+                if (ex.Number == 229) // Permission denied error
+                {
+                    Console.WriteLine("Sorry, you don't have permission to add people.");
+                }
+                else
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
+            }
+        }
+
+
 
     }
 }
