@@ -44,7 +44,8 @@ namespace IMDBui
                 Console.WriteLine("1. Search movie by Title Name");
                 Console.WriteLine("2. Search person by Person Name");
                 Console.WriteLine("3. Add movie to DB");
-                Console.WriteLine("4. Back to login");
+                Console.WriteLine("4. Search person detailed");
+                Console.WriteLine("5. Back to login");
                 Console.Write("Enter your choice: ");
 
                 switch (Console.ReadLine())
@@ -65,6 +66,10 @@ namespace IMDBui
                         Console.ReadKey();
                         break;
                     case "4":
+                        SearchPersonByExactName();
+                        Console.ReadKey();
+                        break;
+                    case "5":
                         connection.Close();
                         Menu();
                         break;
@@ -217,6 +222,49 @@ namespace IMDBui
                 }
             }
         }
+        public static void SearchPersonByExactName()
+        {
+            Console.Clear();
+            Console.WriteLine("Enter the exact name of the person:");
+            string exactName = Console.ReadLine();
+
+            using SqlConnection connection = new SqlConnection(ConnectionString);
+            connection.Open();
+
+            using SqlCommand cmd = new SqlCommand("sp_GetPersonDetailsAndMoviesByExactName", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            cmd.Parameters.Add(new SqlParameter("@ExactName", exactName));
+
+            using SqlDataReader reader = cmd.ExecuteReader();
+            if (!reader.HasRows)
+            {
+                Console.WriteLine("No results found.");
+            }
+            else
+            {
+                Console.WriteLine($"Details for {exactName}:\n");
+                bool isFirstResultSet = true;
+                do
+                {
+                    while (reader.Read())
+                    {
+                        if (isFirstResultSet)
+                        {
+                            Console.WriteLine($"Person ID: {reader["PersonId"]}, Name: {reader["Name"]}, Birth Year: {reader["birthYear"]}, Death Year: {reader["deathYear"]}\n");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Movie ID: {reader["MovieId"]}, Movie Title: {reader["MovieTitle"]}, Movie Year: {reader["MovieYear"]}, Roles: {reader["Roles"]}");
+                        }
+                    }
+                    isFirstResultSet = false;
+                } while (reader.NextResult());
+            }
+        }
+
+
 
 
     }
