@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 
 
 
-DbMethod.Menu();
+DbMethod.Login();
 
 
 

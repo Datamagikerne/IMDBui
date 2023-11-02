@@ -11,8 +11,7 @@ namespace IMDBui
     public static class DbMethod
     {
         private static string ConnectionString = "";
-
-        public static void Menu()
+        public static void Login()
         {
             Console.Clear();
             Console.WriteLine("Welcome to the IMDB Database Console UI");
@@ -34,8 +33,14 @@ namespace IMDBui
             catch (SqlException ex)
             {
                 Console.WriteLine("\nLogin failed. Please check your username and password.");
-                Menu();
+                Menu(connection);
             }
+            Menu(connection);
+        }
+
+        public static void Menu(SqlConnection connection)
+        {
+            
 
             while (true)
             {
@@ -55,7 +60,7 @@ namespace IMDBui
                 {
                     case "0":
                         connection.Close();
-                        Menu();
+                        Login();
                         break;
                     case "1":
                         SearchByName();
@@ -279,26 +284,43 @@ namespace IMDBui
             };
             fetchCmd.Parameters.AddWithValue("@Tconst", tconst);
 
-            using SqlDataReader reader = fetchCmd.ExecuteReader();
-
-            if (reader.Read())
+            try
             {
-                Console.WriteLine("Existing Movie Details:");
-                Console.WriteLine($"Title Type: {reader["titleType"]}");
-                Console.WriteLine($"Primary Title: {reader["TitleName"]}");
-                Console.WriteLine($"Original Title: {reader["originalTitle"]}");
-                Console.WriteLine($"Is Adult: {reader["isAdult"]}");
-                Console.WriteLine($"Start Year: {reader["startYear"]}");
-                Console.WriteLine($"End Year: {reader["endYear"]}");
-                Console.WriteLine($"Runtime Minutes: {reader["runtimeMinutes"]}");
+                using SqlDataReader reader = fetchCmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    Console.WriteLine("Existing Movie Details:");
+                    Console.WriteLine($"Title Type: {reader["titleType"]}");
+                    Console.WriteLine($"Primary Title: {reader["TitleName"]}");
+                    Console.WriteLine($"Original Title: {reader["originalTitle"]}");
+                    Console.WriteLine($"Is Adult: {reader["isAdult"]}");
+                    Console.WriteLine($"Start Year: {reader["startYear"]}");
+                    Console.WriteLine($"End Year: {reader["endYear"]}");
+                    Console.WriteLine($"Runtime Minutes: {reader["runtimeMinutes"]}");
+                }
+                else
+                {
+                    Console.WriteLine("Movie not found with the specified tconst.");
+                    return;
+                }
+
+                reader.Close();
             }
-            else
+            catch (SqlException ex)
             {
-                Console.WriteLine("Movie not found with the specified tconst.");
-                return;
+                if (ex.Number == 229) // Permission denied error
+                {
+                    Console.WriteLine("Sorry, you don't have permission to add movies.");
+                    Console.ReadKey();
+                    Menu(connection);
+                }
+                else
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
             }
 
-            reader.Close();
+            
 
             Console.WriteLine();
             Console.WriteLine("Enter new values (or leave blank to set to null):");
