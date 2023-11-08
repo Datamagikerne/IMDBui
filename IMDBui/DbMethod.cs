@@ -53,6 +53,7 @@ namespace IMDBui
                 Console.WriteLine("4. Update movie");
                 Console.WriteLine("5. Search person details(Exact)");
                 Console.WriteLine("6. Add person to DB");
+                Console.WriteLine("7. Search movie details(Exect)");
 
                 Console.Write("Enter your choice: ");
 
@@ -89,6 +90,11 @@ namespace IMDBui
                         break;
                     case "6":
                         AddPerson();
+                        Console.WriteLine("Press any key to return to the main menu...");
+                        Console.ReadKey();
+                        break;
+                    case "7":
+                        SearchMovieByTitle();
                         Console.WriteLine("Press any key to return to the main menu...");
                         Console.ReadKey();
                         break;
@@ -485,6 +491,47 @@ namespace IMDBui
                 {
                     Console.WriteLine($"An error occurred: {ex.Message}");
                 }
+            }
+        }
+        public static void SearchMovieByTitle()
+        {
+            Console.Clear();
+            Console.WriteLine("Enter the title of the movie:");
+            string movieTitle = Console.ReadLine();
+
+            using SqlConnection connection = new SqlConnection(ConnectionString);
+            connection.Open();
+
+            using SqlCommand cmd = new SqlCommand("sp_GetMovieDetailsAndCastCrew", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            cmd.Parameters.Add(new SqlParameter("@MovieTitle", movieTitle));
+
+            using SqlDataReader reader = cmd.ExecuteReader();
+            if (!reader.HasRows)
+            {
+                Console.WriteLine("No results found.");
+            }
+            else
+            {
+                Console.WriteLine($"Details for the movie '{movieTitle}':\n");
+                bool isFirstResultSet = true;
+                do
+                {
+                    while (reader.Read())
+                    {
+                        if (isFirstResultSet)
+                        {
+                            Console.WriteLine($"Movie ID: {reader["MovieId"]}, Title: {reader["primaryTitle"]}, Original Title: {reader["originalTitle"]}, Adult: {reader["isAdult"]}, Start Year: {reader["startYear"]}, End Year: {reader["endYear"]}, Runtime Minutes: {reader["runtimeMinutes"]}\n");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Person ID: {reader["PersonId"]}, Name: {reader["PersonName"]}, Roles: {reader["Roles"]}");
+                        }
+                    }
+                    isFirstResultSet = false;
+                } while (reader.NextResult());
             }
         }
     }
